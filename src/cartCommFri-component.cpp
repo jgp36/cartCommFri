@@ -3,29 +3,81 @@
 #include <iostream>
 
 CartCommFri::CartCommFri(std::string const& name) : TaskContext(name){
-  std::cout << "CartCommFri constructed !" <<std::endl;
+  //Setup data ports
+  this->addPort("CartesianPosition",port_cart_pos_);
+
+  this->addPort("CartesianWrenchCommand", port_cart_wrench_cmd_);
+  this->addPort("CarteisanImpedenceCommand", port_cart_imp_cmd_);
+
+  //Setup properties
+  this->addProperty("kp",kp_);
 }
 
 bool CartCommFri::configureHook(){
-  std::cout << "CartCommFri configured !" <<std::endl;
+  //Set Cartesian Impedance - this overrides their position control-uggg x,y,z
+  cart_imp_cmd_.stiffness.linear.x = 0;
+  cart_imp_cmd_.stiffness.linear.y = 0;
+  cart_imp_cmd_.stiffness.linear.z = 0;
+  cart_imp_cmd_.stiffness.angular.x = 0;
+  cart_imp_cmd_.stiffness.angular.y = 0;
+  cart_imp_cmd_.stiffness.angular.z = 0;
+  cart_imp_cmd_.damping.linear.x = 0;
+  cart_imp_cmd_.damping.linear.y = 0;
+  cart_imp_cmd_.damping.linear.z = 0;
+  cart_imp_cmd_.damping.angular.x = 0;
+  cart_imp_cmd_.damping.angular.y = 0;
+  cart_imp_cmd_.damping.angular.z = 0;
+  port_cart_imp_cmd_.write(cart_imp_cmd_);
+
+  //Initialize outputs
+  cart_wrench_cmd_.force.x = 0;
+  cart_wrench_cmd_.force.y = 0;
+  cart_wrench_cmd_.force.z = 0;
+  cart_wrench_cmd_.torque.x = 0;
+  cart_wrench_cmd_.torque.y = 0;
+  cart_wrench_cmd_.torque.z = 0;
+  port_cart_wrench_cmd_.write(cart_wrench_cmd_);
+
+  //Set desired position to the current
+  port_cart_pos_.read(cart_pos_);
+  pos_des_.push_back(cart_pos_.position.x);
+  pos_des_.push_back(cart_pos_.position.y);
+  pos_des_.push_back(cart_pos_.position.z);
+
+
   return true;
 }
 
 bool CartCommFri::startHook(){
-  std::cout << "CartCommFri started !" <<std::endl;
+
   return true;
 }
 
 void CartCommFri::updateHook(){
-  std::cout << "CartCommFri executes updateHook !" <<std::endl;
+
+  //Read data
+  if(port_cart_pos_.read(cart_pos_) == NewData) {
+    
+    //Position control - uggg pose is x,y,z
+    cart_wrench_cmd_.force.x = kp_*(pos_des_[0] - cart_pos_.position.x);
+    cart_wrench_cmd_.force.y = kp_*(pos_des_[1] - cart_pos_.position.y);
+    cart_wrench_cmd_.force.z = kp_*(pos_des_[2] - cart_pos_.position.z);
+    //Not bothering controlling using quaternions
+    cart_wrench_cmd_.torque.x = 0;
+    cart_wrench_cmd_.torque.y = 0;
+    cart_wrench_cmd_.torque.z = 0;
+
+  }
+  port_cart_wrench_cmd_.write(cart_wrench_cmd_);
+ 
 }
 
 void CartCommFri::stopHook() {
-  std::cout << "CartCommFri executes stopping !" <<std::endl;
+
 }
 
 void CartCommFri::cleanupHook() {
-  std::cout << "CartCommFri cleaning up !" <<std::endl;
+ 
 }
 
 /*

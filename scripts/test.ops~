@@ -1,0 +1,23 @@
+import("CartCommFri")
+import("lwr_fri")
+
+loadComponent("lwr","lwr_fri::FRIComponent")
+loadComponent("ccf", "CartCommFri")
+
+setActivity("lwr",0, 99, ORO_SCHED_RT)
+setActivity("ccf", 0.001, 99, ORO_SCHED_RT)
+lwr.udp_port=49938
+lwr.configure
+
+ccf.kp = 1.0
+ccf.configure
+lwr.start
+ccf.start
+
+var ConnPolicy cp
+cp.type = DATA
+cp.lock_policy = LOCK_FREE
+
+connect("ccf.CartesianPosition","lwr.CartesianPosition",cp)
+connect("ccf.CartesianImpedanceCommand","lwr.CartesianImpedanceCommand",cp)
+connect("ccf.CartesianWrenchCommand","lwr.CartesianWrenchCommand",cp)

@@ -6,5 +6,7 @@
     <license></license>
     <author>Unknown Author</author>
     <depend package="rtt" />
+    <depend package="rtt_geometry_msgs" />
+    <depend package="lwr_fri" />
 </package>
 

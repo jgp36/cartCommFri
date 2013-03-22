@@ -5,6 +5,7 @@
 
 #include <lwr_fri/typekit/Types.hpp>
 #include <geometry_msgs/typekit/Types.hpp>
+#include <rtt/os/TimeService.hpp>
 
 using namespace RTT;
 
@@ -22,14 +23,17 @@ class CartCommFri : public RTT::TaskContext{
 
   //Orocos Properties
   float kp_;
+  float kd_;
+  float t_out_;
 
   //Other
   std::vector<float> pos_des_;
   std::vector<float> cart_vel_;
   std::vector<float> last_pos_;
-  float t_last_;
-  float t_disp_;
-  float data_rate_;
+  RTT::os::TimeService::ticks t_start_;
+  RTT::os::TimeService::Seconds t_cur_;
+  RTT::os::TimeService::Seconds t_last_;
+  RTT::os::TimeService::Seconds t_disp_;
   
   public:
     CartCommFri(std::string const& name);

@@ -27,7 +27,9 @@ class CartCommFri : public RTT::TaskContext{
   std::vector<float> pos_des_;
   std::vector<float> cart_vel_;
   std::vector<float> last_pos_;
-  float last_t_;
+  float t_last_;
+  float t_disp_;
+  float data_rate_;
   
   public:
     CartCommFri(std::string const& name);

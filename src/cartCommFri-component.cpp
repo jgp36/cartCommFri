@@ -43,6 +43,17 @@ bool CartCommFri::configureHook(){
   pos_des_.push_back(cart_pos_.position.x);
   pos_des_.push_back(cart_pos_.position.y);
   pos_des_.push_back(cart_pos_.position.z);
+  
+  //Assume zero initial velocity
+  for (size_t ii(0); ii < 3; ++ii) {
+    cart_vel_.push_back(0);
+  }
+  
+  //Set parameters for caluclating velocity
+  last_pos_.push_back(cart_pos_.position.x);
+  last_pos_.push_back(cart_pos_.position.y);
+  last_pos_.push_back(cart_pos_.position.z);
+  t_last_ = cart_pos_.header.stamp.toSec();
 
 
   return true;
@@ -58,17 +69,38 @@ void CartCommFri::updateHook(){
   //Read data
   if(port_cart_pos_.read(cart_pos_) == NewData) {
     
+    //Calculate velocity
+    cart_vel_[0] = (cart_pos_.position.x - last_pos_[0])/(cart_pos_.header.stamp.toSec() - t_last_);
+    cart_vel_[1] = (cart_pos_.position.y - last_pos_[1])/(cart_pos_.header.stamp.toSec() - t_last_);
+    cart_vel_[2] = (cart_pos_.position.z - last_pos_[2])/(cart_pos_.header.stamp.toSec() - t_last_);
+    
     //Position control - uggg pose is x,y,z
-    cart_wrench_cmd_.force.x = kp_*(pos_des_[0] - cart_pos_.position.x);
-    cart_wrench_cmd_.force.y = kp_*(pos_des_[1] - cart_pos_.position.y);
-    cart_wrench_cmd_.force.z = kp_*(pos_des_[2] - cart_pos_.position.z);
+    cart_wrench_cmd_.force.x = kp_*(pos_des_[0] - cart_pos_.position.x) - kd_*cart_vel_[0];
+    cart_wrench_cmd_.force.y = kp_*(pos_des_[1] - cart_pos_.position.y) - kd_*cart_vel_[1];
+    cart_wrench_cmd_.force.z = kp_*(pos_des_[2] - cart_pos_.position.z) - kd_*cart_vel_[2];
     //Not bothering controlling using quaternions
     cart_wrench_cmd_.torque.x = 0;
     cart_wrench_cmd_.torque.y = 0;
     cart_wrench_cmd_.torque.z = 0;
+    
+    //Update for next velocity calculation
+    last_pos_[0] = cart_pos_.position.x;
+    last_pos_[1] = cart_pos_.position.y;
+    last_pos_[2] = cart_pos_.position.z;
+    t_last_ = cart_pos_.header.stamp.toSec();
 
   }
+  
+  //Write command
   port_cart_wrench_cmd_.write(cart_wrench_cmd_);
+  
+  //Display data
+  if (RTT::os::TimeService::Instance()->getNSecs() - t_disp_ > 1/data_rate_) {
+    std::cout << "Cartesian Position: " << cart_pos_.position.x << " " << cart_pos_.position.y << " " << cart_pos_.position.z << std::endl;
+    std::cout << "Cartesian Force Command: " << cart_wrench_cmd_.force.x << " " << cart_wrench_cmd_.force.y << " " << cart_wrench_cmd_.force.z << std::endl;
+    std::cout << "\n";
+    t_disp_ = RTT::os::TimeService::Instance()->getNSecs()
+  } 
  
 }
 

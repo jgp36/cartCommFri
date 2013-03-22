@@ -2,6 +2,8 @@
 #include <rtt/Component.hpp>
 #include <iostream>
 
+#define nsec2sec 1e-9
+
 CartCommFri::CartCommFri(std::string const& name) : TaskContext(name){
   //Setup data ports
   this->addPort("CartesianPosition",port_cart_pos_);
@@ -11,6 +13,8 @@ CartCommFri::CartCommFri(std::string const& name) : TaskContext(name){
 
   //Setup properties
   this->addProperty("kp",kp_);
+  this->addProperty("kd",kd_);
+  this->addProperty("DataRate",data_rate_);
 }
 
 bool CartCommFri::configureHook(){
@@ -95,11 +99,11 @@ void CartCommFri::updateHook(){
   port_cart_wrench_cmd_.write(cart_wrench_cmd_);
   
   //Display data
-  if (RTT::os::TimeService::Instance()->getNSecs() - t_disp_ > 1/data_rate_) {
+  if (RTT::os::TimeService::Instance()->getNSecs()*nsec2sec - t_disp_ > 1/data_rate_) {
     std::cout << "Cartesian Position: " << cart_pos_.position.x << " " << cart_pos_.position.y << " " << cart_pos_.position.z << std::endl;
     std::cout << "Cartesian Force Command: " << cart_wrench_cmd_.force.x << " " << cart_wrench_cmd_.force.y << " " << cart_wrench_cmd_.force.z << std::endl;
     std::cout << "\n";
-    t_disp_ = RTT::os::TimeService::Instance()->getNSecs()
+    t_disp_ = RTT::os::TimeService::Instance()->getNSecs()*nsec2sec;
   } 
  
 }

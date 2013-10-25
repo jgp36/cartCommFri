@@ -74,9 +74,6 @@ void CartCommFri::updateHook(){
       last_pos_.push_back(cart_pos_.position.y);
       last_pos_.push_back(cart_pos_.position.z);
     }
-    
-    //Write Impedance
-    port_cart_wrench_cmd_.write(cart_wrench_cmd_);
 
     //Calculate velocity
     cart_vel_[0] = (cart_pos_.position.x - last_pos_[0])/(t_cur_ - t_last_);
@@ -98,6 +95,9 @@ void CartCommFri::updateHook(){
     last_pos_[2] = cart_pos_.position.z;
     t_last_ = t_cur_;
   }
+  
+  //Write Impedance
+  port_cart_wrench_cmd_.write(cart_wrench_cmd_);
   
   //Write command
   port_cart_wrench_cmd_.write(cart_wrench_cmd_);

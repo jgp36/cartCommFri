@@ -97,7 +97,7 @@ void CartCommFri::updateHook(){
   }
   
   //Write Impedance
-  port_cart_wrench_cmd_.write(cart_wrench_cmd_);
+  port_cart_imp_cmd_.write(cart_imp_cmd_);
   
   //Write command
   port_cart_wrench_cmd_.write(cart_wrench_cmd_);
